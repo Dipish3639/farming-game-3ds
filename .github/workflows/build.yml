@@ -81,7 +81,7 @@ jobs:
           gh release delete latest-build --cleanup-tag -y -R "$GITHUB_REPOSITORY" || true
           gh release create latest-build pixelfarm.cia pixelfarm.3dsx -R "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" --latest --title "Pixel Farm (latest build)" \
-            --notes "Built from $GITHUB_SHA. Install pixelfarm.cia with FBI (scan the QR code in the README), or copy pixelfarm.3dsx to sdmc:/3ds/ for the Homebrew Launcher."
+            --notes "Built from $GITHUB_SHA. Install pixelfarm.cia (Tiny Harvest) with FBI (scan the QR code in the README), or copy pixelfarm.3dsx to sdmc:/3ds/ for the Homebrew Launcher."
 
   pc-test:
     runs-on: ubuntu-latest
@@ -89,7 +89,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build and run the headless simulation
         run: |
-          cc -O2 -Wall -Wextra -Werror -Isource source/game.c source/gfx.c source/sprites.c source/data.c source/audio.c tools/pc_sim.c -lm -o pc_sim
+          cc -O2 -Wall -Wextra -Werror -Isource source/game.c source/gfx.c source/art.c source/audio.c tools/pc_sim.c -lm -o pc_sim
           mkdir -p shots
           ./pc_sim shots
       - uses: actions/upload-artifact@v4

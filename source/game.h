@@ -1,15 +1,11 @@
 #pragma once
 #include <stdint.h>
+#include "art.h"
 #include "gfx.h"
-#include "data.h"
 
 #define TOP_W 400
 #define BOT_W 320
 #define SCREEN_H 240
-
-#define MAP_W 48
-#define MAP_H 32
-#define TILE 16
 
 enum {
     BTN_A = 1 << 0,
@@ -32,88 +28,64 @@ typedef struct {
     int tx, ty;               // bottom-screen touch position
 } Input;
 
-enum { G_GRASS, G_DIRT, G_WATER, G_TILLED };
-enum { O_NONE, O_TREE, O_WEED, O_STONE, O_TWIG, O_FENCE, O_SPRINKLER, O_HOUSE, O_BIN, O_SHOP };
-
 typedef struct {
-    uint8_t ground, obj, watered, crop; // crop: 0 = none, otherwise crop index + 1
-    uint8_t growth, dead;
-} Tile;
-
-enum { DIR_DOWN, DIR_UP, DIR_LEFT, DIR_RIGHT };
-enum { WEATHER_SUN, WEATHER_RAIN, WEATHER_SNOW };
+    uint8_t kind;    // 0 = empty, otherwise crop kind + 1
+    uint8_t stage;   // 0 seed .. 4 ripe
+    uint8_t watered; // once watered, a crop grows all the way
+    uint8_t pad;
+    float grow;      // seconds of growth so far
+} Bed;
 
 typedef struct {
     uint32_t magic, version;
-    Tile map[MAP_H][MAP_W];
-    float px, py;
-    int dir;
-    int day, season, year, minutes;
-    int gold, energy, water;
-    int inv[NUM_ITEMS];
-    int sel; // selected backpack item, -1 = none
-    int hoe_lvl, can_lvl;
-    int weather;
-    uint32_t rng;
-    int shipped[NUM_CROPS];
-    int total_earned, harvested, bought;
-    int quest, quest_prog;
-    int music_on;
+    Bed beds[NUM_BEDS];
+    int coins, unlocked, sel, music_on, harvested;
+    float clock; // time of day, 0..1
 } SaveData;
 
-enum { MODE_TITLE, MODE_PLAY, MODE_SHOP, MODE_PAUSE, MODE_ASK_SLEEP, MODE_SUMMARY, MODE_HELP };
+enum { MODE_TITLE, MODE_PLAY, MODE_PAUSE };
 
 typedef struct {
     float x, y, vx, vy, grav;
     int life;
     u32 col;
-    uint8_t size;
+    uint8_t size, kind; // kind: 0 square bit, 1 soft puff (smoke)
 } Particle;
 
 typedef struct {
     float x, y;
     int life;
     u32 col;
-    char text[28];
+    char text[24];
 } Floater;
 
-typedef struct {
-    float x, y, vy;
-    int item, life;
-} ItemPop;
-
-typedef struct {
-    float x, y, vx, vy;
-    int t;
-    u32 col;
-} Critter;
-
-#define MAX_PARTICLES 160
-#define MAX_FLOATERS 10
-#define MAX_POPS 12
-#define MAX_CRITTERS 6
+#define MAX_PARTICLES 220
+#define MAX_FLOATERS 8
 
 typedef struct {
     SaveData s;
-    int mode, menu_sel, help_page, help_return;
-    int shop_sel, shop_scroll;
-    int frame, minute_acc;
-    int anim, moving, swing, swing_tool, a_hold, step_timer;
-    float camx, camy;
+    int mode, frame, menu_sel;
+    int target;          // bed the farmer is heading to / standing at
+    float fx, fy;        // farmer's feet
+    float path_x[3], path_y[3];
+    int path_len, facing, walk_anim, idle;
+    int pending;         // A was pressed while walking: act on arrival
+    int act_timer, act_tool, repeat;
+    float rain, rain_timer, wind;
     char msg[64];
     int msg_timer;
-    int quit, has_save, loaded_season;
-    int sum_earn, sum_items[NUM_CROPS], passed_out, sum_day;
-    int fade, fade_dir, fade_pending; // fade_pending: 1 = sleep, 2 = pass out
+    int dirty, save_timer, has_save, quit;
+    int card_bounce;
     Particle parts[MAX_PARTICLES];
     Floater floats[MAX_FLOATERS];
-    ItemPop pops[MAX_POPS];
-    Critter critters[MAX_CRITTERS];
+    u32 pal[256];        // art palette tinted for the time of day
+    float dark;          // 0 day .. 1 deep night
 } Game;
 
 void game_init(Game *g);
 void game_update(Game *g, const Input *in);
 void game_render(Game *g, Canvas *top, Canvas *bottom);
+void game_shutdown(Game *g); // saves
 
 // Provided by the platform layer.
 const char *plat_save_path(void);

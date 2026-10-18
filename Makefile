@@ -21,9 +21,9 @@ SOURCES		:=	source
 DATA		:=
 INCLUDES	:=	source
 
-APP_TITLE	:=	Pixel Farm
-APP_DESCRIPTION	:=	A cozy little farming game
-APP_AUTHOR	:=	Pixel Farm
+APP_TITLE	:=	Tiny Harvest
+APP_DESCRIPTION	:=	Plant, water, harvest
+APP_AUTHOR	:=	Tiny Harvest
 
 #---------------------------------------------------------------------------------
 # options for code generation

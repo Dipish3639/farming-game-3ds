@@ -12,7 +12,7 @@ static u32 bot_px[BOT_W * SCREEN_H];
 
 const char *plat_save_path(void)
 {
-    return "sdmc:/3ds/pixelfarm/save.dat";
+    return "sdmc:/3ds/tinyharvest/save.dat";
 }
 
 // The 3DS LCDs are portrait panels rotated 90 degrees: the framebuffer is
@@ -115,7 +115,7 @@ int main(void)
     gfxInitDefault();
     osSetSpeedupEnable(true);
     mkdir("sdmc:/3ds", 0777);
-    mkdir("sdmc:/3ds/pixelfarm", 0777);
+    mkdir("sdmc:/3ds/tinyharvest", 0777);
 
     audio_start();
     Game *game = (Game *)malloc(sizeof(Game));
@@ -150,6 +150,7 @@ int main(void)
         gspWaitForVBlank();
     }
 
+    game_shutdown(game);
     free(game);
     audio_stop();
     gfxExit();

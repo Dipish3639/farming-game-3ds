@@ -1,7 +1,7 @@
 # makerom settings for building Pixel Farm as an installable .cia title.
 BasicInfo:
-  Title                   : "PixelFarm"
-  ProductCode             : "CTR-P-PXFM"
+  Title                   : "TinyHarvest"
+  ProductCode             : "CTR-P-TNYH"
   Logo                    : Homebrew
 
 TitleInfo:
