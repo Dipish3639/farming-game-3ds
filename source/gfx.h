@@ -15,6 +15,7 @@ typedef struct {
 typedef struct {
     u32 *px;
     int w, h;
+    int opaque; // every pixel set: drawn with a fast row copy
 } Sprite;
 
 void cv_clear(Canvas *c, u32 col);

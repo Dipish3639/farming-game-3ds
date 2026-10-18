@@ -21,66 +21,66 @@ Sprite S_WATER[4];
 // Art. Each char is a palette entry; '.' is transparent.
 
 static const char *ART_PLAYER_DOWN[] = {
-    "................",
-    "....kkkkkkkk....",
-    "...kaaaaaaaak...",
-    "...kaaaaaaaak...",
-    "...kaffffffak...",
+    ".....kkkkkk.....",
+    "....kyyyyyyk....",
+    "..kkyyyyyyyykk..",
+    ".kyyyrrrrrryyyk.",
+    "..kkaffffffakk..",
     "...kfkffffkfk...",
-    "...kffffffffk...",
-    "....kFffffFk....",
-    "...keeeeeeeek...",
+    "...kFffffffFk...",
+    "....kffffffk....",
+    "...keewwwweek...",
     "..keeeeeeeeeek..",
-    "..kfeeeeeeeefk..",
-    "..kkEEEEEEEEkk..",
+    "..kfejeeeejefk..",
+    "..kkjjjjjjjjkk..",
     "...kjjjjjjjjk...",
     "...kjjjkkjjjk...",
-    "...kjjk..kjjk...",
+    "...kNNk..kNNk...",
     "....kk....kk....",
 };
 
 static const char *ART_PLAYER_UP[] = {
-    "................",
-    "....kkkkkkkk....",
-    "...kaaaaaaaak...",
-    "...kaaaaaaaak...",
-    "...kaaaaaaaak...",
+    ".....kkkkkk.....",
+    "....kyyyyyyk....",
+    "..kkyyyyyyyykk..",
+    ".kyyyyyyyyyyyyk.",
+    "..kkaaaaaaaakk..",
     "...kaaaaaaaak...",
     "...kaaaaaaaak...",
     "....kaaaaaak....",
     "...keeeeeeeek...",
     "..keeeeeeeeeek..",
-    "..kfeeeeeeeefk..",
-    "..kkEEEEEEEEkk..",
+    "..kfejeeeejefk..",
+    "..kkjjjjjjjjkk..",
     "...kjjjjjjjjk...",
     "...kjjjkkjjjk...",
-    "...kjjk..kjjk...",
+    "...kNNk..kNNk...",
     "....kk....kk....",
 };
 
 static const char *ART_PLAYER_SIDE[] = {
-    "................",
-    ".....kkkkkk.....",
-    "....kaaaaaak....",
-    "...kaaaaaaaak...",
-    "...kaaaaffffk...",
-    "...kaaaffkffk...",
-    "...kaaafffffk...",
-    "....kaafffFk....",
-    "....keeeeeek....",
-    "...keeeeeeeek...",
-    "...keeeefeeek...",
-    "...kEEEEEEEEk...",
+    "....kkkkkk......",
+    "...kyyyyyyk.....",
+    "..kyyyyyyyykk...",
+    ".kyyrrrrrryyyyk.",
+    "..kkaaaffffk....",
+    "...kaaffkffk....",
+    "...kaafffffFk...",
+    "....kaaffffk....",
+    "....keeeewk.....",
+    "...keeeeeeek....",
+    "...kejeefeek....",
+    "...kjjjjjjjk....",
     "....kjjjjjjk....",
     "....kjjjjjjk....",
-    "....kjjkkjjk....",
+    "....kNNkkNNk....",
     ".....kk..kk.....",
 };
 
 // Leg rows (13..15) for walking frames.
-static const char *LEGS_FRONT_A[] = {"...kjjjkkjjjk...", "...kjjk..kkk....", "....kk.........."};
-static const char *LEGS_FRONT_B[] = {"...kjjjkkjjjk...", "....kkk..kjjk...", "..........kk...."};
-static const char *LEGS_SIDE_A[] = {"...kjjk..kjjk...", "..kjjk....kjjk..", "..kk........kk.."};
+static const char *LEGS_FRONT_A[] = {"...kjjjkkjjjk...", "...kNNk..kkk....", "....kk.........."};
+static const char *LEGS_FRONT_B[] = {"...kjjjkkjjjk...", "....kkk..kNNk...", "..........kk...."};
+static const char *LEGS_SIDE_A[] = {"...kjjjk.kjjk...", "..kNNk...kNNk...", "..kk......kk...."};
 
 static const char *ART_HOE[] = {
     "................",
@@ -495,9 +495,11 @@ static u32 pal_color(char ch, const Pal *pal)
     case 'f': return RGB(0xf2c39a);
     case 'F': return RGB(0xd49a72);
     case 'a': return RGB(0x7a4220);
-    case 'e': return RGB(0x3f6fc8);
-    case 'E': return RGB(0x2a4a8a);
-    case 'j': return RGB(0x5a4a3a);
+    case 'e': return RGB(0xd8483a);
+    case 'E': return RGB(0x9a2a24);
+    case 'j': return RGB(0x3e64b0);
+    case 'y': return RGB(0xf2d06b);
+    case 'r': return RGB(0xc0392b);
     case 'b': return RGB(0x3f7fd6);
     case 'c': return RGB(0x9fd3ff);
     case 'p': return pal->p;
@@ -516,6 +518,7 @@ static Sprite blank(int w, int h)
     s.w = w;
     s.h = h;
     s.px = (u32 *)calloc((size_t)(w * h), sizeof(u32));
+    s.opaque = 0;
     return s;
 }
 
@@ -657,6 +660,7 @@ static Sprite noise_tile(u32 base, u32 dark, u32 light, int ndark, int nlight, u
     tile_rng = seed;
     for (int i = 0; i < ndark; i++) s.px[rnd(256)] = dark;
     for (int i = 0; i < nlight; i++) s.px[rnd(256)] = light;
+    s.opaque = 1;
     return s;
 }
 
@@ -734,6 +738,7 @@ static void make_static_ground(void)
                 if ((y + 4) % 8 == 5 && (wx + 8) % 16 >= 2 && (wx + 8) % 16 < 5) c = RGB(0x7ab8f4);
                 s.px[y * 16 + x] = c;
             }
+        s.opaque = 1;
         S_WATER[f] = s;
     }
 }

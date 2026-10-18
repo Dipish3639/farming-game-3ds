@@ -2,19 +2,25 @@
 
 A cozy pixel-art farming game for the **Nintendo 3DS**, inspired by Stardew Valley — but just the farming.
 
-Clear your overgrown land, till the soil, plant seeds, water them every day, and ship your harvest for gold. Crops change with the seasons, rain waters your fields for you, and sprinklers take care of watering once you can afford them.
+Clear your overgrown land, dig the soil, plant seeds, water them every day and ship your harvest for gold. Built-in goals walk you through everything, and the A button always does the right thing for whatever is in front of you.
+
+<p>
+<img src="docs/tutorial.png" width="260" alt="Tutorial goal and action prompt">
+<img src="docs/harvest.png" width="260" alt="Ripe crops ready to harvest">
+<img src="docs/shop.png" width="260" alt="The seed stall">
+</p>
 
 ## Features
 
-- **Farm view on the top screen**, HUD and backpack on the touch screen
-- **12 crops across 4 seasons** — Parsnip, Potato, Cauliflower, Strawberry, Tomato, Melon, Blueberry, Corn, Pumpkin, Eggplant, Cranberry and Winter Kale. Some regrow after harvest.
-- **Tools**: Hoe, Watering Can, Scythe, Pickaxe
-- **Day/night cycle** (6 AM – 2 AM, about 12 real minutes per day) with an energy bar. Stay up past 2 AM and you'll pass out!
-- **Seasons** — 28 days each; the farm changes colour and out-of-season crops wither
-- **Weather** — rain waters every tilled tile, winter brings snow
-- **Seed Stall** shop with seasonal seeds, sprinklers and tool upgrades (Big Watering Can, Steel Hoe)
-- **Shipping bin** — sell crops overnight and get a shipping report each morning
-- **Eat your crops** to restore energy
+- **One-button farming** — walk up to anything and press **A**: cut weeds, break stones, dig, plant, water, harvest, refill the can, ship, shop or sleep. A bubble above the tile tells you what A will do. **Hold A** to keep working.
+- **Guided goals** — a goal panel and a bouncing arrow lead you from your first weed to your first harvest and beyond, with gold rewards.
+- **Clear crop feedback** — thirsty crops show a water drop, ripe crops bob and sparkle, and the touch screen tells you how many days are left.
+- **Music and sound** — a bouncy daytime tune, a dreamy night theme, and sound effects for every action (all synthesized in real time).
+- **12 crops across 4 seasons**, some regrow after harvest
+- **Day/night cycle** with lit windows and fireflies, **seasons** that recolour the farm, **rain** that waters for you, and **snow** in winter
+- **Seed Stall** with seasonal seeds, sprinklers and tool upgrades (Big Watering Can, Steel Hoe)
+- **Shipping bin** with a nightly shipping report
+- Particles, floating text, butterflies and falling leaves
 - Autosaves every night to `sdmc:/3ds/pixelfarm/save.dat`
 
 ## Controls
@@ -23,12 +29,12 @@ Clear your overgrown land, till the soil, plant seeds, water them every day, and
 | --- | --- |
 | Circle Pad / D-Pad | Move |
 | Hold B | Run |
-| A | Use tool / plant / harvest / ship / open shop / go to bed |
-| L / R or tap the backpack | Choose item |
-| Y | Eat the selected crop |
-| START | Menu (save, quit) |
+| A | Do whatever the prompt says (hold to repeat) |
+| L / R or tap the backpack | Choose which seeds to plant / item to use |
+| Y | Eat the selected crop for energy |
+| START | Menu: How to Play, music on/off, save, quit |
 
-**Tips:** Face the house door and press A to sleep. Select a crop and press A at the shipping bin to sell the whole stack. Refill the watering can at the pond.
+> **No sound?** The 3DS needs its DSP firmware dumped once for homebrew audio: run **DSP1** (or Luma3DS's *Dump DSP firmware* option in the Rosalina menu). The game still runs fine without it.
 
 ## Installing on a 3DS
 
@@ -72,10 +78,10 @@ docker run --rm -v "$PWD":/src -w /src devkitpro/devkitarm make
 
 Everything is drawn with a small software renderer (`source/gfx.c`) into plain pixel buffers which are copied to the 3DS framebuffers each frame — no image assets needed. All pixel art lives as text grids in `source/sprites.c`, recoloured per crop and per season.
 
-Because the game code doesn't depend on the 3DS, it can also run on a PC. `tools/pc_sim.c` plays a scripted session (till, plant, water, sleep, harvest, ship, shop, seasons, save/load) and writes screenshots:
+Because the game code doesn't depend on the 3DS, it can also run on a PC. `tools/pc_sim.c` plays through the whole tutorial using button presses only, the way a player would — following the goals from the first weed to buying seeds — checks every goal completes, and writes screenshots plus a WAV of all the game's audio:
 
 ```sh
-cc -O2 -Isource source/game.c source/gfx.c source/sprites.c source/data.c tools/pc_sim.c -lm -o pc_sim
+cc -O2 -Isource source/game.c source/gfx.c source/sprites.c source/data.c source/audio.c tools/pc_sim.c -lm -o pc_sim
 mkdir -p shots && ./pc_sim shots
 ```
 
@@ -85,5 +91,6 @@ mkdir -p shots && ./pc_sim shots
 | `source/game.c` | Game state, farming rules, day cycle, shop, save/load, rendering |
 | `source/sprites.c` | Pixel art and procedurally generated ground tiles |
 | `source/data.c` | Crop table and item names |
+| `source/audio.c` | Chiptune synthesizer: music sequencer and sound effects |
 | `source/gfx.c` | Software renderer and 5×7 pixel font |
 | `cia/` | `.cia` packaging: makerom settings, HOME Menu banner + jingle, FBI QR code |

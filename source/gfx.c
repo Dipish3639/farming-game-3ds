@@ -50,16 +50,25 @@ void cv_pixel(Canvas *c, int x, int y, u32 col)
 void cv_sprite(Canvas *c, const Sprite *s, int x, int y, int flip)
 {
     if (!s->px) return;
-    for (int j = 0; j < s->h; j++) {
-        int dy = y + j;
-        if (dy < 0 || dy >= c->h) continue;
-        u32 *row = c->px + dy * c->w;
+    // Clip once up front so the inner loops stay tight.
+    int i0 = x < 0 ? -x : 0, i1 = x + s->w > c->w ? c->w - x : s->w;
+    int j0 = y < 0 ? -y : 0, j1 = y + s->h > c->h ? c->h - y : s->h;
+    if (i0 >= i1 || j0 >= j1) return;
+    for (int j = j0; j < j1; j++) {
+        u32 *row = c->px + (y + j) * c->w + x;
         const u32 *src = s->px + j * s->w;
-        for (int i = 0; i < s->w; i++) {
-            int dx = x + i;
-            if (dx < 0 || dx >= c->w) continue;
-            u32 p = flip ? src[s->w - 1 - i] : src[i];
-            if (p >> 24) row[dx] = p;
+        if (s->opaque && !flip) {
+            memcpy(row + i0, src + i0, (size_t)(i1 - i0) * sizeof(u32));
+        } else if (flip) {
+            for (int i = i0; i < i1; i++) {
+                u32 p = src[s->w - 1 - i];
+                if (p >> 24) row[i] = p;
+            }
+        } else {
+            for (int i = i0; i < i1; i++) {
+                u32 p = src[i];
+                if (p >> 24) row[i] = p;
+            }
         }
     }
 }
@@ -76,24 +85,30 @@ void cv_sprite_scaled(Canvas *c, const Sprite *s, int x, int y, int scale)
 
 void cv_tint(Canvas *c, int r, int g, int b)
 {
+    unsigned char lr[256], lg[256], lb[256];
+    for (int i = 0; i < 256; i++) {
+        int vr = (i * r) >> 8, vg = (i * g) >> 8, vb = (i * b) >> 8;
+        lr[i] = (unsigned char)(vr > 255 ? 255 : vr);
+        lg[i] = (unsigned char)(vg > 255 ? 255 : vg);
+        lb[i] = (unsigned char)(vb > 255 ? 255 : vb);
+    }
     int n = c->w * c->h;
+    u32 *px = c->px;
     for (int i = 0; i < n; i++) {
-        u32 p = c->px[i];
-        u32 pr = (((p >> 16) & 0xFF) * r) >> 8;
-        u32 pg = (((p >> 8) & 0xFF) * g) >> 8;
-        u32 pb = ((p & 0xFF) * b) >> 8;
-        if (pr > 255) pr = 255;
-        if (pg > 255) pg = 255;
-        if (pb > 255) pb = 255;
-        c->px[i] = 0xFF000000u | (pr << 16) | (pg << 8) | pb;
+        u32 p = px[i];
+        px[i] = 0xFF000000u | ((u32)lr[(p >> 16) & 0xFF] << 16) | ((u32)lg[(p >> 8) & 0xFF] << 8) | lb[p & 0xFF];
     }
 }
 
 void cv_panel(Canvas *c, int x, int y, int w, int h, u32 fill, u32 border)
 {
-    cv_rect(c, x + 2, y, w - 4, h, border);
-    cv_rect(c, x, y + 2, w, h - 4, border);
-    cv_rect(c, x + 1, y + 1, w - 2, h - 2, border);
+    // Two-pixel border with rounded corners, fill drawn once.
+    cv_rect(c, x + 2, y, w - 4, 1, border);
+    cv_rect(c, x + 1, y + 1, w - 2, 1, border);
+    cv_rect(c, x + 2, y + h - 1, w - 4, 1, border);
+    cv_rect(c, x + 1, y + h - 2, w - 2, 1, border);
+    cv_rect(c, x, y + 2, 2, h - 4, border);
+    cv_rect(c, x + w - 2, y + 2, 2, h - 4, border);
     cv_rect(c, x + 2, y + 2, w - 4, h - 4, fill);
 }
 
@@ -158,6 +173,7 @@ static const Glyph GLYPHS[] = {
     {'>', ".#.....#.....#.....#...#...#...#..."},
     {'=', "..........#####.....#####.........."},
     {'*', ".......#..#.#.#.###.#.#.#..#......."},
+    {'&', ".##..#..#.#.#...#...#.#.##..#..##.#"},
     {'#', ".#.#.#####.#.#..#.#.#####.#.#......"},
 };
 
