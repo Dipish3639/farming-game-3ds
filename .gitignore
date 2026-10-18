@@ -1,0 +1,8 @@
+build/
+*.3dsx
+*.smdh
+*.elf
+*.map
+pc_sim
+shots/
+save.dat

@@ -1,0 +1,33 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  3ds:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkitarm:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build .3dsx
+        run: make
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pixelfarm-3dsx
+          path: pixelfarm.3dsx
+
+  pc-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run the headless simulation
+        run: |
+          cc -O2 -Wall -Wextra -Werror -Isource source/game.c source/gfx.c source/sprites.c source/data.c tools/pc_sim.c -lm -o pc_sim
+          mkdir -p shots
+          ./pc_sim shots
+      - uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: shots/*.ppm
