@@ -32,20 +32,34 @@ Clear your overgrown land, till the soil, plant seeds, water them every day, and
 
 ## Installing on a 3DS
 
-You need a 3DS with custom firmware and the Homebrew Launcher.
+You need a 3DS with custom firmware (Luma3DS).
 
-1. Download `pixelfarm.3dsx` from the latest **Build** run on GitHub Actions (the `pixelfarm-3dsx` artifact), or build it yourself (below).
-2. Copy it to `sdmc:/3ds/` on your SD card.
-3. Launch it from the Homebrew Launcher.
+### Install the .cia with FBI (recommended)
 
-It also runs in 3DS emulators that load `.3dsx` files (e.g. Citra / Lime3DS / Azahar).
+<img src="cia/qr.png" alt="QR code for pixelfarm.cia" width="220">
+
+1. Connect your 3DS to Wi-Fi and open **FBI**.
+2. Go to **Remote Install → Scan QR Code** and point the camera at the code above.
+3. Confirm the install. **Pixel Farm** appears on your HOME Menu.
+
+The QR code links to
+`https://github.com/Dipish3639/farming-game-3ds/releases/download/latest-build/pixelfarm.cia`,
+which always serves the newest build of the default branch. You can also download `pixelfarm.cia` from the
+[**latest-build** release](https://github.com/Dipish3639/farming-game-3ds/releases/tag/latest-build),
+copy it to your SD card, and install it from FBI's file browser.
+
+### Or run the .3dsx from the Homebrew Launcher
+
+Copy `pixelfarm.3dsx` from the same release to `sdmc:/3ds/` and launch it from the Homebrew Launcher.
+It also runs in 3DS emulators (e.g. Azahar / Lime3DS / Citra).
 
 ## Building
 
 Install [devkitPro](https://devkitpro.org/wiki/Getting_Started) with the `3ds-dev` package group, then:
 
 ```sh
-make
+make                                   # pixelfarm.3dsx
+cia/build_cia.sh makerom bannertool    # pixelfarm.cia (needs makerom and bannertool)
 ```
 
 Or with Docker:
@@ -72,3 +86,4 @@ mkdir -p shots && ./pc_sim shots
 | `source/sprites.c` | Pixel art and procedurally generated ground tiles |
 | `source/data.c` | Crop table and item names |
 | `source/gfx.c` | Software renderer and 5×7 pixel font |
+| `cia/` | `.cia` packaging: makerom settings, HOME Menu banner + jingle, FBI QR code |
