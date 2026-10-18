@@ -90,6 +90,7 @@ else
 endif
 
 ifeq ($(strip $(NO_SMDH)),)
+	export _3DSXDEPS	:=	$(OUTPUT).smdh
 	export _3DSXFLAGS += --smdh=$(CURDIR)/$(TARGET).smdh
 endif
 
