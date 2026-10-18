@@ -17,6 +17,71 @@ jobs:
         with:
           name: pixelfarm-3dsx
           path: pixelfarm.3dsx
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: |
+            pixelfarm.elf
+            pixelfarm.smdh
+
+  package-cia:
+    needs: build-3ds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-output
+      - name: Fetch makerom and bannertool
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p ctrtools build
+          cd ctrtools
+          url=$(gh api repos/3DSGuy/Project_CTR/releases --jq '[.[].assets[] | select(.name | test("makerom.*(ubuntu|linux)"; "i")) | .browser_download_url][0]')
+          echo "makerom: $url"
+          curl -sSfL -o makerom.zip "$url"
+          unzip -o -q makerom.zip -d makerom
+          url=$(gh api repos/diasurgical/bannertool/releases/latest --jq '[.assets[] | select(.name | endswith(".zip")) | .browser_download_url][0]')
+          echo "bannertool: $url"
+          curl -sSfL -o bannertool.zip "$url"
+          unzip -o -q bannertool.zip -d bannertool
+          find . -type f | grep -v '\.zip$'
+          mr=$(find makerom -type f -name 'makerom*' ! -name '*.exe' | head -n1)
+          bt=$(find bannertool -type f -path '*linux-x86_64*' -name bannertool | head -n1)
+          [ -n "$bt" ] || bt=$(find bannertool -type f -name bannertool | head -n1)
+          install -m755 "$mr" /usr/local/bin/makerom
+          install -m755 "$bt" /usr/local/bin/bannertool
+      - name: Build .cia
+        run: cia/build_cia.sh makerom bannertool
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pixelfarm-cia
+          path: pixelfarm.cia
+
+  release:
+    # Publishes the latest build of the default branch at a fixed download URL
+    # (used by the QR code for FBI's Remote Install).
+    needs: [build-3ds, package-cia]
+    if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: pixelfarm-cia
+      - uses: actions/download-artifact@v4
+        with:
+          name: pixelfarm-3dsx
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest-build --cleanup-tag -y -R "$GITHUB_REPOSITORY" || true
+          gh release create latest-build pixelfarm.cia pixelfarm.3dsx -R "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" --latest --title "Pixel Farm (latest build)" \
+            --notes "Built from $GITHUB_SHA. Install pixelfarm.cia with FBI (scan the QR code in the README), or copy pixelfarm.3dsx to sdmc:/3ds/ for the Homebrew Launcher."
 
   pc-test:
     runs-on: ubuntu-latest

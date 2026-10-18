@@ -102,9 +102,53 @@ static int write_icon(const char *path)
     return 0;
 }
 
+static int write_ppm(const char *path, const Canvas *c)
+{
+    FILE *f = fopen(path, "wb");
+    if (!f) return 1;
+    fprintf(f, "P6\n%d %d\n255\n", c->w, c->h);
+    for (int i = 0; i < c->w * c->h; i++) {
+        unsigned char rgb[3] = {(unsigned char)(c->px[i] >> 16), (unsigned char)(c->px[i] >> 8), (unsigned char)c->px[i]};
+        fwrite(rgb, 1, 3, f);
+    }
+    fclose(f);
+    return 0;
+}
+
+// Writes the 256x128 HOME Menu banner (for the .cia) as PPM.
+static int write_banner(const char *path)
+{
+    static u32 px[256 * 128];
+    Canvas c = {px, 256, 128};
+    spr_init();
+    for (int y = 0; y < 128; y++) {
+        u32 r = 0x70 + 0x50 * y / 128, g = 0xb8 + 0x30 * y / 128;
+        cv_rect(&c, 0, y, 256, 1, RGB((r << 16) | (g << 8) | 0xf0));
+    }
+    cv_rect(&c, 20, 14, 40, 8, RGB(0xffffff));
+    cv_rect(&c, 28, 10, 22, 14, RGB(0xffffff));
+    cv_rect(&c, 190, 22, 36, 7, RGB(0xffffff));
+    cv_rect(&c, 198, 18, 18, 12, RGB(0xffffff));
+    for (int x = 0; x < 256; x++) {
+        int h1 = 78 + (x * 7 % 23 < 12 ? 0 : 1) + (x < 128 ? (128 - x) / 16 : (x - 128) / 20);
+        cv_rect(&c, x, h1, 1, 128 - h1, RGB(0x55a428));
+        cv_rect(&c, x, 92, 1, 36, RGB(0x6abe30));
+    }
+    cv_sprite(&c, &S_TREE, 6, 66, 0);
+    cv_sprite(&c, &S_TREE, 234, 68, 1);
+    for (int i = 0; i < 8; i++) {
+        cv_sprite(&c, &S_TILLED, 8 + i * 31, 104, 0);
+        cv_sprite(&c, &S_RIPE[(i * 5) % NUM_CROPS], 8 + i * 31, 101, 0);
+    }
+    const char *t = "PIXEL FARM";
+    cv_text_shadow(&c, (256 - text_width(t, 3)) / 2, 34, t, RGB(0xffe070), RGB(0x5a3418), 3);
+    return write_ppm(path, &c);
+}
+
 int main(int argc, char **argv)
 {
     if (argc > 2 && !strcmp(argv[1], "--icon")) return write_icon(argv[2]);
+    if (argc > 2 && !strcmp(argv[1], "--banner")) return write_banner(argv[2]);
     if (argc > 1) out_dir = argv[1];
     snprintf(save_path, sizeof(save_path), "%s/save.dat", out_dir);
     remove(save_path);
